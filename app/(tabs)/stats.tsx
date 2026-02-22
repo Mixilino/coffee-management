@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useExtractions } from '@/stores/extractionStore';
 import { useCoffees } from '@/stores/coffeeStore';
+import { round1 } from '@/utils/numbers';
 
 export default function StatsScreen() {
   const extractions = useExtractions();
@@ -70,13 +71,13 @@ export default function StatsScreen() {
               <Text className="text-zinc-400 text-sm mb-3">Overall</Text>
               <View className="flex-row flex-wrap gap-3">
                 <StatBox label="Total Shots" value={overall.totalShots.toString()} />
-                <StatBox label="Coffee Used" value={`${Math.round(overall.totalUsed)}g`} />
+                <StatBox label="Coffee Used" value={`${round1(overall.totalUsed)}g`} />
                 <StatBox
                   label="Avg Rating"
                   value={overall.avgRating > 0 ? overall.avgRating.toFixed(1) : '—'}
                   icon="star"
                 />
-                <StatBox label="Avg Ratio" value={`${overall.avgRatio.toFixed(2)}:1`} />
+                <StatBox label="Avg Ratio" value={`${round1(overall.avgRatio)}:1`} />
               </View>
             </View>
 
@@ -96,8 +97,8 @@ export default function StatsScreen() {
                             label="Avg Rating"
                             value={c.avgRating > 0 ? c.avgRating.toFixed(1) : '—'}
                           />
-                          <MiniRow label="Avg Time" value={`${Math.round(c.avgTime)}s`} />
-                          <MiniRow label="Avg Ratio" value={`${c.avgRatio.toFixed(2)}:1`} />
+                          <MiniRow label="Avg Time" value={`${round1(c.avgTime)}s`} />
+                          <MiniRow label="Avg Ratio" value={`${round1(c.avgRatio)}:1`} />
                           {c.bestRating > 0 && (
                             <MiniRow
                               label="Best Shot"

@@ -2,6 +2,7 @@ import { View, Text, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Extraction } from '@/types';
 import { getQuickSummary } from '@/services/recommendationService';
+import { round1 } from '@/utils/numbers';
 
 interface ExtractionRowProps {
   extraction: Extraction;
@@ -30,12 +31,12 @@ export default function ExtractionRow({ extraction, onPress }: ExtractionRowProp
 
       <View className="flex-row items-center gap-3 mb-1">
         <Text className="text-zinc-300 text-sm">
-          {gramsIn}g → {yieldGrams}g
+          {round1(gramsIn)}g → {round1(yieldGrams)}g
         </Text>
         <Text className="text-zinc-500 text-xs">|</Text>
         <Text className="text-zinc-300 text-sm">{timeSeconds}s</Text>
         <Text className="text-zinc-500 text-xs">|</Text>
-        <Text className="text-amber-500 text-sm font-medium">{ratio}:1</Text>
+        <Text className="text-amber-500 text-sm font-medium">{round1(ratio)}:1</Text>
       </View>
 
       <View className="flex-row items-center justify-between">

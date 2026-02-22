@@ -40,3 +40,10 @@ export interface Recommendation {
   reason: string;
   severity: 'minor' | 'major';
 }
+
+export interface SuggestedSettings {
+  grinderSetting: string;
+  gramsIn: number;
+  timeSeconds: number;
+  ratio: number;
+}

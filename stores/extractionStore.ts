@@ -36,7 +36,7 @@ export const useExtractionStore = create<ExtractionState & ExtractionActions>()(
           state.extractions.push({
             ...data,
             id,
-            ratio: Math.round(ratio * 100) / 100,
+            ratio: Math.round(ratio * 10) / 10,
           });
         });
 

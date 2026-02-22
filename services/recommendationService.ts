@@ -1,4 +1,30 @@
-import type { Extraction, Recommendation } from '@/types';
+import type { Extraction, Recommendation, SuggestedSettings } from '@/types';
+import { round1 } from '@/utils/numbers';
+
+/**
+ * Suggested settings for a coffee based on that coffee's extraction history.
+ * Uses the most recent extraction for this coffee so recommendations are
+ * coffee-specific (e.g. Brazil grind 18 vs Ethiopia grind 10).
+ */
+export function getSuggestedSettingsForCoffee(
+  coffeeId: string,
+  extractions: Extraction[]
+): SuggestedSettings | null {
+  const forCoffee = extractions
+    .filter((e) => e.coffeeId === coffeeId)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  if (forCoffee.length === 0) return null;
+
+  const last = forCoffee[0];
+  const g = parseFloat(last.grinderSetting);
+  return {
+    grinderSetting: isNaN(g) ? last.grinderSetting : round1(g).toString(),
+    gramsIn: round1(last.gramsIn),
+    timeSeconds: last.timeSeconds,
+    ratio: round1(last.ratio),
+  };
+}
 
 export function getRecommendation(extraction: Extraction): Recommendation {
   const { timeSeconds, yieldGrams, gramsIn, notes } = extraction;
@@ -19,7 +45,7 @@ export function getRecommendation(extraction: Extraction): Recommendation {
       adjustGrind: 'coarser',
       adjustTime: 'shorter',
       adjustDose: ratio > 2.5 ? 'more' : 'same',
-      reason: `Over-extracted (${isBitter ? 'bitter taste, ' : ''}${isSlow ? `${timeSeconds}s too long, ` : ''}ratio ${ratio.toFixed(2)}:1). Go coarser and aim for 22-28s.`,
+      reason: `Over-extracted (${isBitter ? 'bitter taste, ' : ''}${isSlow ? `${timeSeconds}s too long, ` : ''}ratio ${round1(ratio)}:1). Go coarser and aim for 22-28s.`,
       severity: isBitter && isSlow ? 'major' : 'minor',
     };
   }
@@ -29,7 +55,7 @@ export function getRecommendation(extraction: Extraction): Recommendation {
       adjustGrind: 'finer',
       adjustTime: 'longer',
       adjustDose: ratio < 1.5 ? 'less' : 'same',
-      reason: `Under-extracted (${isSour ? 'sour taste, ' : ''}${isFast ? `${timeSeconds}s too fast, ` : ''}ratio ${ratio.toFixed(2)}:1). Go finer and aim for 22-28s.`,
+      reason: `Under-extracted (${isSour ? 'sour taste, ' : ''}${isFast ? `${timeSeconds}s too fast, ` : ''}ratio ${round1(ratio)}:1). Go finer and aim for 22-28s.`,
       severity: isSour && isFast ? 'major' : 'minor',
     };
   }
@@ -38,7 +64,7 @@ export function getRecommendation(extraction: Extraction): Recommendation {
     adjustGrind: 'same',
     adjustTime: 'same',
     adjustDose: 'same',
-    reason: `Good extraction! Ratio ${ratio.toFixed(2)}:1, time ${timeSeconds}s. Keep current settings.`,
+    reason: `Good extraction! Ratio ${round1(ratio)}:1, time ${timeSeconds}s. Keep current settings.`,
     severity: 'minor',
   };
 }

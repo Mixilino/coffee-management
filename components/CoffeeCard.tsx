@@ -1,6 +1,7 @@
 import { View, Text, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Coffee } from '@/types';
+import { round1 } from '@/utils/numbers';
 
 interface CoffeeCardProps {
   coffee: Coffee;
@@ -37,7 +38,7 @@ export default function CoffeeCard({ coffee, shotCount, onPress }: CoffeeCardPro
 
       <View className="flex-row justify-between">
         <Text className="text-zinc-400 text-sm">
-          {Math.round(remaining)}g remaining
+          {round1(remaining)}g remaining
         </Text>
         <Text className="text-zinc-500 text-sm">
           {shotCount} shot{shotCount !== 1 ? 's' : ''}

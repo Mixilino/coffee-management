@@ -11,6 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import type { Coffee } from '@/types';
+import { round1 } from '@/utils/numbers';
 
 interface AdjustModalProps {
   visible: boolean;
@@ -26,7 +27,7 @@ export default function AdjustModal({ visible, coffee, onAdjust, onDismiss }: Ad
 
   useEffect(() => {
     if (coffee && visible) {
-      setAmount(Math.round(coffee.remaining).toString());
+      setAmount(round1(coffee.remaining).toString());
       setReason('');
     }
   }, [coffee, visible]);
@@ -81,11 +82,11 @@ export default function AdjustModal({ visible, coffee, onAdjust, onDismiss }: Ad
             <View className="bg-zinc-800 rounded-xl p-4 mb-5">
               <View className="flex-row justify-between mb-2">
                 <Text className="text-zinc-400 text-sm">Tracked</Text>
-                <Text className="text-white text-sm">{Math.round(tracked)}g</Text>
+                <Text className="text-white text-sm">{round1(tracked)}g</Text>
               </View>
               <View className="flex-row justify-between mb-2">
                 <Text className="text-zinc-400 text-sm">You measured</Text>
-                <Text className="text-amber-500 text-sm font-medium">{numAmount}g</Text>
+                <Text className="text-amber-500 text-sm font-medium">{round1(numAmount)}g</Text>
               </View>
               <View className="flex-row justify-between">
                 <Text className="text-zinc-400 text-sm">Offset will be</Text>
@@ -95,7 +96,7 @@ export default function AdjustModal({ visible, coffee, onAdjust, onDismiss }: Ad
                   }`}
                 >
                   {newOffset >= 0 ? '+' : ''}
-                  {Math.round(newOffset)}g
+                  {round1(newOffset)}g
                 </Text>
               </View>
             </View>

@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { View, Text, Pressable, Modal, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Coffee, Extraction } from '@/types';
+import { getSuggestedSettingsForCoffee } from '@/services/recommendationService';
+import { round1 } from '@/utils/numbers';
 
 interface CoffeeDetailModalProps {
   visible: boolean;
@@ -34,6 +36,11 @@ export default function CoffeeDetailModal({
   const [showAllExtractions, setShowAllExtractions] = useState(false);
   const displayed = showAllExtractions ? extractions : extractions.slice(0, 5);
 
+  const suggestedSettings = useMemo(
+    () => (coffee ? getSuggestedSettingsForCoffee(coffee.id, extractions) : null),
+    [coffee, extractions]
+  );
+
   if (!coffee) return null;
 
   return (
@@ -50,12 +57,12 @@ export default function CoffeeDetailModal({
         </Text>
 
         <View className="bg-zinc-800 rounded-xl p-4 mb-4">
-          <Row label="Total bought" value={`${Math.round(coffee.boughtGrams)}g`} />
-          <Row label="Used" value={`${Math.round(coffee.usedGrams)}g`} />
-          <Row label="Remaining" value={`${Math.round(coffee.remaining)}g`} />
+          <Row label="Total bought" value={`${round1(coffee.boughtGrams)}g`} />
+          <Row label="Used" value={`${round1(coffee.usedGrams)}g`} />
+          <Row label="Remaining" value={`${round1(coffee.remaining)}g`} />
           <Row
             label="Manual offset"
-            value={`${coffee.manualOffset >= 0 ? '+' : ''}${Math.round(coffee.manualOffset)}g`}
+            value={`${coffee.manualOffset >= 0 ? '+' : ''}${round1(coffee.manualOffset)}g`}
           />
           <Row label="Total shots" value={`${shotCount}`} />
         </View>
@@ -68,6 +75,20 @@ export default function CoffeeDetailModal({
             <Text className="text-amber-500 text-center font-medium">Adjust</Text>
           </Pressable>
         </View>
+
+        {suggestedSettings ? (
+          <View className="mb-4 bg-amber-900/30 rounded-xl p-3 border border-amber-700/50">
+            <Text className="text-amber-500 font-semibold text-xs mb-1">Suggested for next shot</Text>
+            <Text className="text-zinc-300 text-sm">
+              Grind {suggestedSettings.grinderSetting} · {suggestedSettings.gramsIn}g in · ~
+              {suggestedSettings.timeSeconds}s · {suggestedSettings.ratio}:1
+            </Text>
+          </View>
+        ) : (
+          <View className="mb-4 bg-zinc-800/50 rounded-xl p-3 border border-zinc-700">
+            <Text className="text-zinc-500 text-sm">No extraction history — use your usual starting point.</Text>
+          </View>
+        )}
 
         {extractions.length > 0 && (
           <View>
@@ -89,7 +110,7 @@ export default function CoffeeDetailModal({
                 <View key={e.id} className="bg-zinc-800 rounded-lg p-3 mb-2">
                   <View className="flex-row justify-between">
                     <Text className="text-white text-sm">
-                      {e.gramsIn}g → {e.yieldGrams}g ({e.ratio}:1)
+                      {round1(e.gramsIn)}g → {round1(e.yieldGrams)}g ({round1(e.ratio)}:1)
                     </Text>
                     <Text className="text-zinc-500 text-xs">
                       {new Date(e.date).toLocaleDateString()}

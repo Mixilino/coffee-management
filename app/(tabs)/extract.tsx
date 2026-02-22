@@ -6,9 +6,12 @@ import {
   useAddExtraction,
   useAddRatingAndNotes,
   useExtractionById,
+  useExtractions,
 } from '@/stores/extractionStore';
+import { getSuggestedSettingsForCoffee } from '@/services/recommendationService';
+import { round1 } from '@/utils/numbers';
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   Alert,
   Keyboard,
@@ -31,6 +34,7 @@ const DEFAULT_YIELD_GRAMS = 36;
 
 export default function ExtractScreen() {
   const activeCoffees = useActiveCoffees();
+  const extractions = useExtractions();
   const addExtraction = useAddExtraction();
   const addRatingAndNotes = useAddRatingAndNotes();
 
@@ -53,7 +57,25 @@ export default function ExtractScreen() {
     [activeCoffees, selectedCoffeeId]
   );
 
-  const ratio = gramsIn > 0 ? (yieldGrams / gramsIn).toFixed(2) : '0.00';
+  const suggestedSettings = useMemo(
+    () => (selectedCoffeeId ? getSuggestedSettingsForCoffee(selectedCoffeeId, extractions) : null),
+    [selectedCoffeeId, extractions]
+  );
+
+  useEffect(() => {
+    if (!selectedCoffeeId) return;
+    const s = getSuggestedSettingsForCoffee(selectedCoffeeId, extractions);
+    if (s) {
+      setGramsIn(round1(s.gramsIn));
+      const g = parseFloat(s.grinderSetting);
+      if (!isNaN(g)) setGrinderSetting(round1(g));
+      setYieldGrams(round1(s.gramsIn * s.ratio));
+      setManualTime(s.timeSeconds.toString());
+      setTimeSeconds(0);
+    }
+  }, [selectedCoffeeId]);
+
+  const ratio = gramsIn > 0 ? round1(yieldGrams / gramsIn).toFixed(1) : '0.0';
   const effectiveTime = timeMode === 'manual' ? parseInt(manualTime, 10) || 0 : timeSeconds;
 
   const canLog = selectedCoffeeId && gramsIn > 0 && effectiveTime > 0 && yieldGrams > 0;
@@ -69,7 +91,7 @@ export default function ExtractScreen() {
       coffeeId: selectedCoffee.id,
       coffeeName: selectedCoffee.name,
       gramsIn,
-      grinderSetting: grinderSetting.toString(),
+      grinderSetting: round1(grinderSetting).toString(),
       timeSeconds: effectiveTime,
       yieldGrams,
       date: new Date().toISOString(),
@@ -125,7 +147,7 @@ export default function ExtractScreen() {
                     >
                       <Text className="text-white text-sm">
                         {c.name}{' '}
-                        <Text className="text-zinc-400">({Math.round(c.remaining)}g)</Text>
+                        <Text className="text-zinc-400">({round1(c.remaining)}g)</Text>
                       </Text>
                     </Pressable>
                   ))}
@@ -134,35 +156,56 @@ export default function ExtractScreen() {
             </View>
           )}
 
+          {selectedCoffee && suggestedSettings && (
+            <View className="mb-5 bg-amber-900/30 rounded-2xl p-4 border border-amber-700/50">
+              <Text className="text-amber-500 font-semibold text-sm mb-1">
+                Suggested for {selectedCoffee.name}
+              </Text>
+              <Text className="text-zinc-300 text-sm">
+                Grind {round1(parseFloat(suggestedSettings.grinderSetting) || 0)} · {round1(suggestedSettings.gramsIn)}g in · ~
+                {suggestedSettings.timeSeconds}s · {round1(suggestedSettings.ratio)}:1
+              </Text>
+              <Text className="text-zinc-500 text-xs mt-1">From your last shot with this coffee</Text>
+            </View>
+          )}
+
+          {selectedCoffee && !suggestedSettings && (
+            <View className="mb-5 bg-zinc-800/50 rounded-2xl p-4 border border-zinc-700">
+              <Text className="text-zinc-400 text-sm">
+                No history for {selectedCoffee.name} yet — use your usual starting point.
+              </Text>
+            </View>
+          )}
+
           <View className="mb-5">
             <Text className="text-zinc-400 text-sm mb-2">Grams In</Text>
             <View className="flex-row items-center gap-2">
               <Pressable
-                onPress={() => setGramsIn((v) => Math.max(0, v - GRAMS_LARGE_STEP))}
+                onPress={() => setGramsIn((v) => round1(Math.max(0, v - GRAMS_LARGE_STEP)))}
                 className="w-12 h-11 rounded-xl bg-zinc-800 items-center justify-center"
               >
                 <Text className="text-white font-medium text-sm">−{GRAMS_LARGE_STEP}</Text>
               </Pressable>
               <Pressable
-                onPress={() => setGramsIn((v) => Math.max(0, v - GRAMS_SMALL_STEP))}
+                onPress={() => setGramsIn((v) => round1(Math.max(0, v - GRAMS_SMALL_STEP)))}
                 className="w-12 h-11 rounded-xl bg-zinc-800 items-center justify-center"
               >
                 <Text className="text-white font-medium text-sm">−{GRAMS_SMALL_STEP}</Text>
               </Pressable>
               <TextInput
-                value={gramsIn.toString()}
-                onChangeText={(t) => setGramsIn(parseFloat(t) || 0)}
+                value={round1(gramsIn).toString()}
+                onChangeText={(t) => setGramsIn(round1(parseFloat(t) || 0))}
                 keyboardType="decimal-pad"
                 className="flex-1 bg-zinc-800 rounded-xl px-4 py-3 text-white text-center text-lg min-w-0"
               />
               <Pressable
-                onPress={() => setGramsIn((v) => v + GRAMS_SMALL_STEP)}
+                onPress={() => setGramsIn((v) => round1(v + GRAMS_SMALL_STEP))}
                 className="w-12 h-11 rounded-xl bg-zinc-800 items-center justify-center"
               >
                 <Text className="text-white font-medium text-sm">+{GRAMS_SMALL_STEP}</Text>
               </Pressable>
               <Pressable
-                onPress={() => setGramsIn((v) => v + GRAMS_LARGE_STEP)}
+                onPress={() => setGramsIn((v) => round1(v + GRAMS_LARGE_STEP))}
                 className="w-12 h-11 rounded-xl bg-zinc-800 items-center justify-center"
               >
                 <Text className="text-white font-medium text-sm">+{GRAMS_LARGE_STEP}</Text>
@@ -174,19 +217,19 @@ export default function ExtractScreen() {
             <Text className="text-zinc-400 text-sm mb-2">Grinder Setting</Text>
             <View className="flex-row items-center gap-2">
               <Pressable
-                onPress={() => setGrinderSetting((v) => Math.max(0, v - YIELD_STEP))}
+                onPress={() => setGrinderSetting((v) => round1(Math.max(0, v - YIELD_STEP)))}
                 className="w-12 h-11 rounded-xl bg-zinc-800 items-center justify-center"
               >
                 <Text className="text-white font-medium text-sm">−{YIELD_STEP}</Text>
               </Pressable>
               <TextInput
-                value={grinderSetting.toString()}
-                onChangeText={(t) => setGrinderSetting(parseFloat(t) || 0)}
+                value={round1(grinderSetting).toString()}
+                onChangeText={(t) => setGrinderSetting(round1(parseFloat(t) || 0))}
                 keyboardType="decimal-pad"
                 className="flex-1 bg-zinc-800 rounded-xl px-4 py-3 text-white text-center text-lg min-w-0"
               />
               <Pressable
-                onPress={() => setGrinderSetting((v) => v + YIELD_STEP)}
+                onPress={() => setGrinderSetting((v) => round1(v + YIELD_STEP))}
                 className="w-12 h-11 rounded-xl bg-zinc-800 items-center justify-center"
               >
                 <Text className="text-white font-medium text-sm">+{YIELD_STEP}</Text>
@@ -232,19 +275,19 @@ export default function ExtractScreen() {
             <Text className="text-zinc-400 text-sm mb-2">Yield (grams out)</Text>
             <View className="flex-row items-center gap-3">
               <Pressable
-                onPress={() => setYieldGrams((v) => Math.max(0, v - 0.5))}
+                onPress={() => setYieldGrams((v) => round1(Math.max(0, v - 0.5)))}
                 className="w-11 h-11 rounded-xl bg-zinc-800 items-center justify-center"
               >
                 <Ionicons name="remove" size={20} color="#fff" />
               </Pressable>
               <TextInput
-                value={yieldGrams.toString()}
-                onChangeText={(t) => setYieldGrams(parseFloat(t) || 0)}
+                value={round1(yieldGrams).toString()}
+                onChangeText={(t) => setYieldGrams(round1(parseFloat(t) || 0))}
                 keyboardType="decimal-pad"
                 className="flex-1 bg-zinc-800 rounded-xl px-4 py-3 text-white text-center text-lg"
               />
               <Pressable
-                onPress={() => setYieldGrams((v) => v + 0.5)}
+                onPress={() => setYieldGrams((v) => round1(v + 0.5))}
                 className="w-11 h-11 rounded-xl bg-zinc-800 items-center justify-center"
               >
                 <Ionicons name="add" size={20} color="#fff" />

@@ -2,6 +2,7 @@ import { View, Text, Pressable, Modal, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Extraction } from '@/types';
 import RecommendationCard from '@/components/RecommendationCard';
+import { round1 } from '@/utils/numbers';
 
 interface ExtractionDetailModalProps {
   visible: boolean;
@@ -38,11 +39,11 @@ export default function ExtractionDetailModal({
           <Text className="text-zinc-500 text-sm mb-5 text-center">{formattedDate}</Text>
 
           <View className="bg-zinc-800 rounded-xl p-4 mb-4">
-            <Row label="Grams In" value={`${extraction.gramsIn}g`} />
-            <Row label="Yield" value={`${extraction.yieldGrams}g`} />
-            <Row label="Ratio" value={`${extraction.ratio}:1`} />
+            <Row label="Grams In" value={`${round1(extraction.gramsIn)}g`} />
+            <Row label="Yield" value={`${round1(extraction.yieldGrams)}g`} />
+            <Row label="Ratio" value={`${round1(extraction.ratio)}:1`} />
             <Row label="Time" value={`${extraction.timeSeconds}s`} />
-            <Row label="Grinder" value={extraction.grinderSetting || '—'} />
+            <Row label="Grinder" value={extraction.grinderSetting ? round1(parseFloat(extraction.grinderSetting)).toString() : '—'} />
           </View>
 
           {extraction.rating && (

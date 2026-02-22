@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Coffee } from '@/types';
+import { round1 } from '@/utils/numbers';
 
 type RestockMode = 'add' | 'set' | 'custom';
 
@@ -76,7 +77,7 @@ export default function RestockModal({ visible, coffee, onRestock, onDismiss }: 
           <View className="bg-zinc-900 rounded-t-3xl px-6 pt-6 pb-10">
             <Text className="text-xl font-bold text-white mb-1 text-center">Restock</Text>
             <Text className="text-zinc-400 text-sm mb-5 text-center">
-              Currently: ~{Math.round(coffee.remaining)}g remaining
+              Currently: ~{round1(coffee.remaining)}g remaining
             </Text>
 
             <View className="gap-2 mb-5">
