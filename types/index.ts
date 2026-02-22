@@ -42,7 +42,7 @@ export interface Recommendation {
   adjustTime: 'shorter' | 'longer' | 'same';
   adjustDose: 'more' | 'less' | 'same';
   reason: string;
-  severity: 'minor' | 'major';
+  severity: 'minor' | 'major' | 'none';
 }
 
 export interface SuggestedSettings {
@@ -50,4 +50,7 @@ export interface SuggestedSettings {
   gramsIn: number;
   timeSeconds: number;
   ratio: number;
+  basedOn?: string;
+  hint?: string;
+  confidence?: 'low' | 'medium' | 'high';
 }

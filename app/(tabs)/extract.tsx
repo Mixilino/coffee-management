@@ -1,6 +1,7 @@
 import RatingModal from '@/components/modals/RatingModal';
 import RecommendationCard from '@/components/RecommendationCard';
 import Stopwatch from '@/components/Stopwatch';
+import { getSuggestedSettingsForCoffee } from '@/services/recommendationService';
 import { useActiveCoffees } from '@/stores/coffeeStore';
 import {
   useAddExtraction,
@@ -8,10 +9,9 @@ import {
   useExtractionById,
   useExtractions,
 } from '@/stores/extractionStore';
-import { getSuggestedSettingsForCoffee } from '@/services/recommendationService';
 import { round1 } from '@/utils/numbers';
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo, useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Keyboard,
@@ -48,6 +48,7 @@ export default function ExtractScreen() {
 
   const [showRating, setShowRating] = useState(false);
   const [lastExtractionId, setLastExtractionId] = useState<string | null>(null);
+  const [isSuggestionExpanded, setIsSuggestionExpanded] = useState(true);
 
   const lastExtraction = useExtractionById(lastExtractionId ?? '');
   const recommendation = lastExtraction?.recommendation ?? null;
@@ -63,17 +64,12 @@ export default function ExtractScreen() {
   );
 
   useEffect(() => {
-    if (!selectedCoffeeId) return;
-    const s = getSuggestedSettingsForCoffee(selectedCoffeeId, extractions);
-    if (s) {
-      setGramsIn(round1(s.gramsIn));
-      const g = parseFloat(s.grinderSetting);
-      if (!isNaN(g)) setGrinderSetting(round1(g));
-      setYieldGrams(round1(s.gramsIn * s.ratio));
-      setManualTime(s.timeSeconds.toString());
-      setTimeSeconds(0);
+    if (!selectedCoffeeId) {
+      setIsSuggestionExpanded(false);
+      return;
     }
-  }, [selectedCoffeeId, extractions]);
+    setIsSuggestionExpanded(true);
+  }, [selectedCoffeeId]);
 
   const ratio = gramsIn > 0 ? round1(yieldGrams / gramsIn).toFixed(1) : '0.0';
   const effectiveTime = timeMode === 'manual' ? parseInt(manualTime, 10) || 0 : timeSeconds;
@@ -108,12 +104,26 @@ export default function ExtractScreen() {
     setShowRating(false);
   };
 
+  const applySuggestedSettings = () => {
+    if (!suggestedSettings) return;
+    setGramsIn(round1(suggestedSettings.gramsIn));
+    const g = parseFloat(suggestedSettings.grinderSetting);
+    if (!isNaN(g)) setGrinderSetting(round1(g));
+    setYieldGrams(round1(suggestedSettings.gramsIn * suggestedSettings.ratio));
+  };
+
+  const applyStarterBaseline = () => {
+    setGramsIn(DEFAULT_GRAMS_IN);
+    setGrinderSetting(DEFAULT_GRINDER_SETTING);
+    setYieldGrams(DEFAULT_YIELD_GRAMS);
+  };
+
   const resetForm = () => {
-    setGramsIn(18);
-    setGrinderSetting(2.5);
+    setGramsIn(DEFAULT_GRAMS_IN);
+    setGrinderSetting(DEFAULT_GRINDER_SETTING);
     setTimeSeconds(0);
     setManualTime('');
-    setYieldGrams(36);
+    setYieldGrams(DEFAULT_YIELD_GRAMS);
     setLastExtractionId(null);
   };
 
@@ -157,24 +167,75 @@ export default function ExtractScreen() {
             </View>
           )}
 
-          {selectedCoffee && suggestedSettings && (
-            <View className="mb-5 bg-amber-900/30 rounded-2xl p-4 border border-amber-700/50">
-              <Text className="text-amber-500 font-semibold text-sm mb-1">
-                Suggested for {selectedCoffee.name}
-              </Text>
-              <Text className="text-zinc-300 text-sm">
-                Grind {round1(parseFloat(suggestedSettings.grinderSetting) || 0)} · {round1(suggestedSettings.gramsIn)}g in · ~
-                {suggestedSettings.timeSeconds}s · {round1(suggestedSettings.ratio)}:1
-              </Text>
-              <Text className="text-zinc-500 text-xs mt-1">From your last shot with this coffee</Text>
-            </View>
-          )}
+          {selectedCoffee && (
+            <View className="mb-5 bg-amber-900/30 rounded-2xl border border-amber-700/50 overflow-hidden">
+              <Pressable
+                onPress={() => setIsSuggestionExpanded((v) => !v)}
+                className="px-4 py-3.5 flex-row items-center justify-between"
+              >
+                <View>
+                  <Text className="text-amber-500 font-semibold text-sm">
+                    Recommendation for {selectedCoffee.name}
+                  </Text>
+                  <Text className="text-zinc-500 text-xs mt-0.5">For your next shot</Text>
+                </View>
+                <Ionicons
+                  name={isSuggestionExpanded ? 'chevron-up' : 'chevron-down'}
+                  size={18}
+                  color="#f59e0b"
+                />
+              </Pressable>
 
-          {selectedCoffee && !suggestedSettings && (
-            <View className="mb-5 bg-zinc-800/50 rounded-2xl p-4 border border-zinc-700">
-              <Text className="text-zinc-400 text-sm">
-                No history for {selectedCoffee.name} yet — use your usual starting point.
-              </Text>
+              {isSuggestionExpanded && (
+                <View className="px-4 pb-4 border-t border-amber-700/30">
+                  {suggestedSettings ? (
+                    <>
+                      <Text className="text-zinc-200 text-sm mt-3 mb-1">
+                        Grind {round1(parseFloat(suggestedSettings.grinderSetting) || 0)} · {round1(suggestedSettings.gramsIn)}g in ·
+                        {' '}{round1(suggestedSettings.gramsIn * suggestedSettings.ratio)}g out · {round1(suggestedSettings.ratio)}:1
+                      </Text>
+                      <Text className="text-zinc-500 text-xs">
+                        Target time guidance: ~{suggestedSettings.timeSeconds}s (set time manually)
+                      </Text>
+                      {!!suggestedSettings.basedOn && (
+                        <Text className="text-zinc-500 text-xs mt-2">{suggestedSettings.basedOn}</Text>
+                      )}
+                      {!!suggestedSettings.hint && (
+                        <Text className="text-zinc-500 text-xs mt-1">{suggestedSettings.hint}</Text>
+                      )}
+                      {!!suggestedSettings.confidence && (
+                        <Text className="text-zinc-500 text-xs mt-1 capitalize">
+                          Confidence: {suggestedSettings.confidence}
+                        </Text>
+                      )}
+                      <Pressable
+                        onPress={applySuggestedSettings}
+                        className="mt-3 bg-amber-700 rounded-xl py-2.5"
+                      >
+                        <Text className="text-white text-center font-semibold">Apply recommendation</Text>
+                      </Pressable>
+                    </>
+                  ) : (
+                    <>
+                      <Text className="text-zinc-300 text-sm mt-3">
+                        No history yet for {selectedCoffee.name}. Start with a safe baseline:
+                      </Text>
+                      <Text className="text-zinc-500 text-xs mt-1">
+                        Grind {DEFAULT_GRINDER_SETTING} · {DEFAULT_GRAMS_IN}g in · {DEFAULT_YIELD_GRAMS}g out · 2.0:1
+                      </Text>
+                      <Text className="text-zinc-500 text-xs mt-1">
+                        Time stays manual so you can stop when the shot looks right.
+                      </Text>
+                      <Pressable
+                        onPress={applyStarterBaseline}
+                        className="mt-3 bg-zinc-800 rounded-xl py-2.5 border border-zinc-700"
+                      >
+                        <Text className="text-white text-center font-semibold">Apply baseline</Text>
+                      </Pressable>
+                    </>
+                  )}
+                </View>
+              )}
             </View>
           )}
 
@@ -311,10 +372,15 @@ export default function ExtractScreen() {
           </Pressable>
 
           {recommendation && (
-            <RecommendationCard
-              recommendation={recommendation}
-              onDismiss={resetForm}
-            />
+            <>
+              <Text className="text-zinc-500 text-xs px-1 mb-2">
+                Feedback from your latest logged shot
+              </Text>
+              <RecommendationCard
+                recommendation={recommendation}
+                onDismiss={resetForm}
+              />
+            </>
           )}
 
           <View className="h-8" />
