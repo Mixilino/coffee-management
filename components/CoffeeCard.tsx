@@ -10,7 +10,7 @@ interface CoffeeCardProps {
 }
 
 export default function CoffeeCard({ coffee, shotCount, onPress }: CoffeeCardProps) {
-  const { name, remaining, boughtGrams, isActive } = coffee;
+  const { name, seller, remaining, boughtGrams, isActive } = coffee;
   const percentage = boughtGrams > 0 ? Math.max(0, Math.min(100, (remaining / boughtGrams) * 100)) : 0;
 
   return (
@@ -26,6 +26,9 @@ export default function CoffeeCard({ coffee, shotCount, onPress }: CoffeeCardPro
         </View>
         <Ionicons name="chevron-forward" size={16} color="#666" />
       </View>
+      <Text className="text-zinc-500 text-xs mb-2" numberOfLines={1}>
+        {seller}
+      </Text>
 
       <View className="h-2 bg-zinc-800 rounded-full mb-2 overflow-hidden">
         <View

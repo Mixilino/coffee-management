@@ -31,7 +31,9 @@ export default function StatsScreen() {
         const avgRatio = shots.reduce((s, e) => s + e.ratio, 0) / shots.length;
         const best = rated.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))[0] ?? null;
         return {
+          id: c.id,
           name: c.name,
+          seller: c.seller,
           totalShots: shots.length,
           avgRating,
           avgTime,
@@ -88,9 +90,12 @@ export default function StatsScreen() {
                   <View className="flex-row gap-3">
                     {perCoffee.map((c) =>
                       c ? (
-                        <View key={c.name} className="bg-zinc-900 rounded-2xl p-4 w-56">
+                        <View key={c.id} className="bg-zinc-900 rounded-2xl p-4 w-56">
                           <Text className="text-white font-semibold mb-3" numberOfLines={1}>
                             {c.name}
+                          </Text>
+                          <Text className="text-zinc-500 text-xs mb-2" numberOfLines={1}>
+                            {c.seller}
                           </Text>
                           <MiniRow label="Shots" value={c.totalShots.toString()} />
                           <MiniRow

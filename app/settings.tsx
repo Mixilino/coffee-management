@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
 import {
-  useCoffees,
+  useAllCoffees,
   useImportCoffees,
   useClearAllCoffees,
 } from '@/stores/coffeeStore';
@@ -21,7 +21,7 @@ import {
 } from '@/services/csvService';
 
 export default function SettingsScreen() {
-  const coffees = useCoffees();
+  const coffees = useAllCoffees();
   const extractions = useExtractions();
   const importCoffees = useImportCoffees();
   const importExtractions = useImportExtractions();

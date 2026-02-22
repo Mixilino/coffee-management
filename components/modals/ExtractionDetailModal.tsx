@@ -36,6 +36,7 @@ export default function ExtractionDetailModal({
           <Text className="text-xl font-bold text-white mb-1 text-center">
             {extraction.coffeeName}
           </Text>
+          <Text className="text-zinc-500 text-xs mb-1 text-center">{extraction.coffeeSeller}</Text>
           <Text className="text-zinc-500 text-sm mb-5 text-center">{formattedDate}</Text>
 
           <View className="bg-zinc-800 rounded-xl p-4 mb-4">

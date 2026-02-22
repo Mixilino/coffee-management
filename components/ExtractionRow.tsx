@@ -10,7 +10,17 @@ interface ExtractionRowProps {
 }
 
 export default function ExtractionRow({ extraction, onPress }: ExtractionRowProps) {
-  const { coffeeName, gramsIn, yieldGrams, timeSeconds, ratio, rating, recommendation, date } =
+  const {
+    coffeeName,
+    coffeeSeller,
+    gramsIn,
+    yieldGrams,
+    timeSeconds,
+    ratio,
+    rating,
+    recommendation,
+    date,
+  } =
     extraction;
 
   const formattedDate = new Date(date).toLocaleDateString('en-US', {
@@ -22,12 +32,15 @@ export default function ExtractionRow({ extraction, onPress }: ExtractionRowProp
 
   return (
     <Pressable onPress={onPress} className="bg-zinc-900 rounded-xl p-4 mb-2">
-      <View className="flex-row items-center justify-between mb-1.5">
+      <View className="flex-row items-center justify-between mb-1">
         <Text className="text-white font-medium text-sm flex-1" numberOfLines={1}>
           {coffeeName}
         </Text>
         <Text className="text-zinc-500 text-xs">{formattedDate}</Text>
       </View>
+      <Text className="text-zinc-500 text-xs mb-1.5" numberOfLines={1}>
+        {coffeeSeller}
+      </Text>
 
       <View className="flex-row items-center gap-3 mb-1">
         <Text className="text-zinc-300 text-sm">

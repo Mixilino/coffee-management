@@ -1,11 +1,14 @@
 export interface Coffee {
   id: string;
   name: string;
+  seller: string;
   boughtGrams: number;
   usedGrams: number;
   manualOffset: number;
   remaining: number;
   isActive: boolean;
+  isArchived: boolean;
+  archivedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -22,6 +25,7 @@ export interface Extraction {
   id: string;
   coffeeId: string;
   coffeeName: string;
+  coffeeSeller: string;
   gramsIn: number;
   grinderSetting: string;
   timeSeconds: number;

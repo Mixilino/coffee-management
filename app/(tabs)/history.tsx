@@ -89,7 +89,9 @@ export default function HistoryScreen() {
                   filterCoffeeId === c.id ? 'bg-amber-700' : 'bg-zinc-800'
                 }`}
               >
-                <Text className="text-white text-sm">{c.name}</Text>
+                <Text className="text-white text-sm">
+                  {c.name} · {c.seller}
+                </Text>
               </Pressable>
             ))}
           </View>

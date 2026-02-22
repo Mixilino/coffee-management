@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
@@ -9,6 +9,8 @@ import {
   useAddCoffee,
   useRestockCoffee,
   useAdjustActualAmount,
+  useArchiveCoffee,
+  useDeleteCoffeePermanently,
 } from '@/stores/coffeeStore';
 import { useExtractions } from '@/stores/extractionStore';
 import CoffeeCard from '@/components/CoffeeCard';
@@ -23,18 +25,53 @@ export default function CoffeesScreen() {
   const addCoffee = useAddCoffee();
   const restockCoffee = useRestockCoffee();
   const adjustActualAmount = useAdjustActualAmount();
+  const archiveCoffee = useArchiveCoffee();
+  const deleteCoffeePermanently = useDeleteCoffeePermanently();
 
   const [showAdd, setShowAdd] = useState(false);
   const [selectedCoffeeId, setSelectedCoffeeId] = useState<string | null>(null);
   const [showDetail, setShowDetail] = useState(false);
   const [showRestock, setShowRestock] = useState(false);
   const [showAdjust, setShowAdjust] = useState(false);
+  const [coffeeFilter, setCoffeeFilter] = useState('');
+  const [sellerFilter, setSellerFilter] = useState('');
+  const [coffeeFilterFocused, setCoffeeFilterFocused] = useState(false);
+  const [sellerFilterFocused, setSellerFilterFocused] = useState(false);
 
   const selectedCoffee = useCoffeeById(selectedCoffeeId ?? '') ?? null;
 
-  const sorted = useMemo(
-    () => [...coffees].sort((a, b) => (a.isActive === b.isActive ? 0 : a.isActive ? -1 : 1)),
+  const coffeeNames = useMemo(
+    () => Array.from(new Set(coffees.map((c) => c.name))),
     [coffees]
+  );
+  const sellers = useMemo(
+    () => Array.from(new Set(coffees.map((c) => c.seller))),
+    [coffees]
+  );
+  const coffeeFilterSuggestions = useMemo(() => {
+    const q = coffeeFilter.trim().toLowerCase();
+    if (q.length < 1) return [];
+    return coffeeNames.filter((name) => name.toLowerCase().includes(q)).slice(0, 5);
+  }, [coffeeFilter, coffeeNames]);
+  const sellerFilterSuggestions = useMemo(() => {
+    const q = sellerFilter.trim().toLowerCase();
+    if (q.length < 1) return [];
+    return sellers.filter((seller) => seller.toLowerCase().includes(q)).slice(0, 5);
+  }, [sellerFilter, sellers]);
+
+  const filtered = useMemo(() => {
+    const nameQ = coffeeFilter.trim().toLowerCase();
+    const sellerQ = sellerFilter.trim().toLowerCase();
+    return coffees.filter(
+      (c) =>
+        (!nameQ || c.name.toLowerCase().includes(nameQ)) &&
+        (!sellerQ || c.seller.toLowerCase().includes(sellerQ))
+    );
+  }, [coffees, coffeeFilter, sellerFilter]);
+
+  const sorted = useMemo(
+    () => [...filtered].sort((a, b) => (a.isActive === b.isActive ? 0 : a.isActive ? -1 : 1)),
+    [filtered]
   );
 
   const shotCountMap = useMemo(() => {
@@ -65,11 +102,74 @@ export default function CoffeesScreen() {
       </View>
 
       <ScrollView className="flex-1 px-4" keyboardShouldPersistTaps="handled">
+        <View className="mb-4 gap-2">
+          <Text className="text-zinc-400 text-xs">Filters</Text>
+          <View className="rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800">
+            <TextInput
+              placeholder="Filter by coffee"
+              placeholderTextColor="#666"
+              value={coffeeFilter}
+              onChangeText={setCoffeeFilter}
+              onFocus={() => setCoffeeFilterFocused(true)}
+              className="px-4 py-3 text-white"
+            />
+            {coffeeFilterFocused && coffeeFilterSuggestions.length > 0 && (
+              <View className="border-t border-zinc-800">
+                {coffeeFilterSuggestions.map((name) => (
+                  <Pressable
+                    key={name}
+                    onPress={() => {
+                      setCoffeeFilter(name);
+                      setCoffeeFilterFocused(false);
+                    }}
+                    className="px-4 py-3"
+                    style={({ pressed }) => ({
+                      backgroundColor: pressed ? 'rgba(63,63,70,0.5)' : undefined,
+                    })}
+                  >
+                    <Text className="text-white">{name}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
+          <View className="rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800">
+            <TextInput
+              placeholder="Filter by seller"
+              placeholderTextColor="#666"
+              value={sellerFilter}
+              onChangeText={setSellerFilter}
+              onFocus={() => setSellerFilterFocused(true)}
+              className="px-4 py-3 text-white"
+            />
+            {sellerFilterFocused && sellerFilterSuggestions.length > 0 && (
+              <View className="border-t border-zinc-800">
+                {sellerFilterSuggestions.map((seller) => (
+                  <Pressable
+                    key={seller}
+                    onPress={() => {
+                      setSellerFilter(seller);
+                      setSellerFilterFocused(false);
+                    }}
+                    className="px-4 py-3"
+                    style={({ pressed }) => ({
+                      backgroundColor: pressed ? 'rgba(63,63,70,0.5)' : undefined,
+                    })}
+                  >
+                    <Text className="text-white">{seller}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
+        </View>
         {sorted.length === 0 ? (
           <View className="bg-zinc-900 rounded-2xl p-8 items-center mt-4">
             <Ionicons name="bag-outline" size={48} color="#666" />
             <Text className="text-zinc-400 mt-3 text-center text-base">
-              No coffees yet. Tap + to add your first bag.
+              {coffees.length === 0
+                ? 'No coffees yet. Tap + to add your first bag.'
+                : 'No coffees match current filters.'}
             </Text>
           </View>
         ) : (
@@ -97,7 +197,9 @@ export default function CoffeesScreen() {
 
       <AddCoffeeModal
         visible={showAdd}
-        onAdd={(name, grams) => addCoffee(name, grams)}
+        existingCoffees={coffees}
+        onAdd={(name, seller, grams) => addCoffee(name, seller, grams)}
+        onRestock={(coffeeId, grams) => restockCoffee(coffeeId, 'add', grams)}
         onDismiss={() => setShowAdd(false)}
       />
 
@@ -113,6 +215,17 @@ export default function CoffeesScreen() {
         onAdjustClick={() => {
           setShowDetail(false);
           setTimeout(() => setShowAdjust(true), 300);
+        }}
+        onArchive={() => {
+          if (selectedCoffeeId) {
+            archiveCoffee(selectedCoffeeId);
+          }
+        }}
+        onDeletePermanently={() => {
+          if (selectedCoffeeId) {
+            deleteCoffeePermanently(selectedCoffeeId);
+          }
+          setShowDetail(false);
         }}
         onDismiss={() => setShowDetail(false)}
       />

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { View, Text, Pressable, Modal, ScrollView } from 'react-native';
+import { View, Text, Pressable, Modal, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Coffee, Extraction } from '@/types';
 import { getSuggestedSettingsForCoffee } from '@/services/recommendationService';
@@ -12,6 +12,8 @@ interface CoffeeDetailModalProps {
   extractions: Extraction[];
   onRestockClick: () => void;
   onAdjustClick: () => void;
+  onArchive: () => void;
+  onDeletePermanently: () => void;
   onDismiss: () => void;
 }
 
@@ -31,6 +33,8 @@ export default function CoffeeDetailModal({
   extractions,
   onRestockClick,
   onAdjustClick,
+  onArchive,
+  onDeletePermanently,
   onDismiss,
 }: CoffeeDetailModalProps) {
   const [showAllExtractions, setShowAllExtractions] = useState(false);
@@ -55,6 +59,10 @@ export default function CoffeeDetailModal({
         <Text className="text-xl font-bold text-white mb-4 text-center">
           {coffee.name}
         </Text>
+        <Text className="text-zinc-500 text-sm mb-4 text-center">{coffee.seller}</Text>
+        {coffee.isArchived && (
+          <Text className="text-red-400 text-xs mb-4 text-center">Archived</Text>
+        )}
 
         <View className="bg-zinc-800 rounded-xl p-4 mb-4">
           <Row label="Total bought" value={`${round1(coffee.boughtGrams)}g`} />
@@ -67,14 +75,54 @@ export default function CoffeeDetailModal({
           <Row label="Total shots" value={`${shotCount}`} />
         </View>
 
-        <View className="flex-row gap-3 mb-4">
-          <Pressable onPress={onRestockClick} className="flex-1 bg-zinc-800 py-3 rounded-xl">
-            <Text className="text-amber-500 text-center font-medium">Restock</Text>
+        {!coffee.isArchived && (
+          <View className="flex-row gap-3 mb-4">
+            <Pressable onPress={onRestockClick} className="flex-1 bg-zinc-800 py-3 rounded-xl">
+              <Text className="text-amber-500 text-center font-medium">Restock</Text>
+            </Pressable>
+            <Pressable onPress={onAdjustClick} className="flex-1 bg-zinc-800 py-3 rounded-xl">
+              <Text className="text-amber-500 text-center font-medium">Adjust</Text>
+            </Pressable>
+          </View>
+        )}
+        {!coffee.isArchived && (
+          <Pressable
+            onPress={() =>
+              Alert.alert(
+                'Archive coffee?',
+                'This hides the coffee from active screens but keeps extraction history.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Archive', style: 'destructive', onPress: onArchive },
+                ]
+              )
+            }
+            className="mb-4 py-2"
+          >
+            <Text className="text-red-400 text-center text-sm">Archive coffee</Text>
           </Pressable>
-          <Pressable onPress={onAdjustClick} className="flex-1 bg-zinc-800 py-3 rounded-xl">
-            <Text className="text-amber-500 text-center font-medium">Adjust</Text>
+        )}
+        {coffee.isArchived && (
+          <Pressable
+            onPress={() =>
+              Alert.alert(
+                'Delete permanently?',
+                'This removes the archived coffee record forever.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Delete permanently',
+                    style: 'destructive',
+                    onPress: onDeletePermanently,
+                  },
+                ]
+              )
+            }
+            className="mb-4 py-2"
+          >
+            <Text className="text-red-500 text-center text-sm">Delete permanently</Text>
           </Pressable>
-        </View>
+        )}
 
         {suggestedSettings ? (
           <View className="mb-4 bg-amber-900/30 rounded-xl p-3 border border-amber-700/50">

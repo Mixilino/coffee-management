@@ -89,7 +89,21 @@ export const useExtractionStore = create<ExtractionState & ExtractionActions>()(
     })),
     {
       name: 'extraction-storage',
+      version: 2,
       storage: createJSONStorage(() => AsyncStorage),
+      migrate: (persistedState: unknown, version) => {
+        const state = (persistedState ?? {}) as ExtractionState;
+        if (version < 2) {
+          return {
+            ...state,
+            extractions: (state.extractions ?? []).map((extraction) => ({
+              ...extraction,
+              coffeeSeller: extraction.coffeeSeller?.trim() || 'Unknown',
+            })),
+          };
+        }
+        return state;
+      },
     }
   )
 );

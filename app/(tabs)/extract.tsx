@@ -73,7 +73,7 @@ export default function ExtractScreen() {
       setManualTime(s.timeSeconds.toString());
       setTimeSeconds(0);
     }
-  }, [selectedCoffeeId]);
+  }, [selectedCoffeeId, extractions]);
 
   const ratio = gramsIn > 0 ? round1(yieldGrams / gramsIn).toFixed(1) : '0.0';
   const effectiveTime = timeMode === 'manual' ? parseInt(manualTime, 10) || 0 : timeSeconds;
@@ -90,6 +90,7 @@ export default function ExtractScreen() {
     const id = addExtraction({
       coffeeId: selectedCoffee.id,
       coffeeName: selectedCoffee.name,
+      coffeeSeller: selectedCoffee.seller,
       gramsIn,
       grinderSetting: round1(grinderSetting).toString(),
       timeSeconds: effectiveTime,
@@ -146,7 +147,7 @@ export default function ExtractScreen() {
                       }`}
                     >
                       <Text className="text-white text-sm">
-                        {c.name}{' '}
+                        {c.name} · {c.seller}{' '}
                         <Text className="text-zinc-400">({round1(c.remaining)}g)</Text>
                       </Text>
                     </Pressable>
