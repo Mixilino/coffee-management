@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useExtractions, useDeleteExtraction } from '@/stores/extractionStore';
 import { useCoffees } from '@/stores/coffeeStore';
 import ExtractionRow from '@/components/ExtractionRow';
-import ExtractionDetailModal from '@/components/ExtractionDetailModal';
+import ExtractionDetailModal from '@/components/modals/ExtractionDetailModal';
 import type { Extraction } from '@/types';
 
 type DateRangeKey = 'all' | '7' | '30';

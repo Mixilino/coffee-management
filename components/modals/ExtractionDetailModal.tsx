@@ -1,7 +1,7 @@
 import { View, Text, Pressable, Modal, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Extraction } from '@/types';
-import RecommendationCard from './RecommendationCard';
+import RecommendationCard from '@/components/RecommendationCard';
 
 interface ExtractionDetailModalProps {
   visible: boolean;

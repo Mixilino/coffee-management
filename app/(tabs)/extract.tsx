@@ -1,25 +1,33 @@
-import { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import RatingModal from '@/components/modals/RatingModal';
+import RecommendationCard from '@/components/RecommendationCard';
+import Stopwatch from '@/components/Stopwatch';
 import { useActiveCoffees } from '@/stores/coffeeStore';
 import {
   useAddExtraction,
   useAddRatingAndNotes,
   useExtractionById,
 } from '@/stores/extractionStore';
-import Stopwatch from '@/components/Stopwatch';
-import RatingModal from '@/components/RatingModal';
-import RecommendationCard from '@/components/RecommendationCard';
+import { Ionicons } from '@expo/vector-icons';
+import { useMemo, useState } from 'react';
+import {
+  Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+const GRAMS_SMALL_STEP = 0.1;
+const GRAMS_LARGE_STEP = 0.5;
+const YIELD_STEP = 0.5;
+const DEFAULT_GRINDER_SETTING = 15;
+const DEFAULT_GRAMS_IN = 18;
+const DEFAULT_YIELD_GRAMS = 36;
 
 export default function ExtractScreen() {
   const activeCoffees = useActiveCoffees();
@@ -27,12 +35,12 @@ export default function ExtractScreen() {
   const addRatingAndNotes = useAddRatingAndNotes();
 
   const [selectedCoffeeId, setSelectedCoffeeId] = useState<string | null>(null);
-  const [gramsIn, setGramsIn] = useState(18);
-  const [grinderSetting, setGrinderSetting] = useState('');
+  const [gramsIn, setGramsIn] = useState(DEFAULT_GRAMS_IN);
+  const [grinderSetting, setGrinderSetting] = useState(DEFAULT_GRINDER_SETTING);
   const [timeMode, setTimeMode] = useState<'stopwatch' | 'manual'>('stopwatch');
   const [timeSeconds, setTimeSeconds] = useState(0);
   const [manualTime, setManualTime] = useState('');
-  const [yieldGrams, setYieldGrams] = useState(36);
+  const [yieldGrams, setYieldGrams] = useState(DEFAULT_YIELD_GRAMS);
 
   const [showRating, setShowRating] = useState(false);
   const [lastExtractionId, setLastExtractionId] = useState<string | null>(null);
@@ -51,6 +59,7 @@ export default function ExtractScreen() {
   const canLog = selectedCoffeeId && gramsIn > 0 && effectiveTime > 0 && yieldGrams > 0;
 
   const handleLog = () => {
+    Keyboard.dismiss();
     if (!selectedCoffee) {
       Alert.alert('Select a coffee', 'Please select a coffee before logging.');
       return;
@@ -60,7 +69,7 @@ export default function ExtractScreen() {
       coffeeId: selectedCoffee.id,
       coffeeName: selectedCoffee.name,
       gramsIn,
-      grinderSetting,
+      grinderSetting: grinderSetting.toString(),
       timeSeconds: effectiveTime,
       yieldGrams,
       date: new Date().toISOString(),
@@ -78,7 +87,7 @@ export default function ExtractScreen() {
 
   const resetForm = () => {
     setGramsIn(18);
-    setGrinderSetting('');
+    setGrinderSetting(2.5);
     setTimeSeconds(0);
     setManualTime('');
     setYieldGrams(36);
@@ -127,37 +136,62 @@ export default function ExtractScreen() {
 
           <View className="mb-5">
             <Text className="text-zinc-400 text-sm mb-2">Grams In</Text>
-            <View className="flex-row items-center gap-3">
+            <View className="flex-row items-center gap-2">
               <Pressable
-                onPress={() => setGramsIn((v) => Math.max(0, v - 0.5))}
-                className="w-11 h-11 rounded-xl bg-zinc-800 items-center justify-center"
+                onPress={() => setGramsIn((v) => Math.max(0, v - GRAMS_LARGE_STEP))}
+                className="w-12 h-11 rounded-xl bg-zinc-800 items-center justify-center"
               >
-                <Ionicons name="remove" size={20} color="#fff" />
+                <Text className="text-white font-medium text-sm">−{GRAMS_LARGE_STEP}</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setGramsIn((v) => Math.max(0, v - GRAMS_SMALL_STEP))}
+                className="w-12 h-11 rounded-xl bg-zinc-800 items-center justify-center"
+              >
+                <Text className="text-white font-medium text-sm">−{GRAMS_SMALL_STEP}</Text>
               </Pressable>
               <TextInput
                 value={gramsIn.toString()}
                 onChangeText={(t) => setGramsIn(parseFloat(t) || 0)}
                 keyboardType="decimal-pad"
-                className="flex-1 bg-zinc-800 rounded-xl px-4 py-3 text-white text-center text-lg"
+                className="flex-1 bg-zinc-800 rounded-xl px-4 py-3 text-white text-center text-lg min-w-0"
               />
               <Pressable
-                onPress={() => setGramsIn((v) => v + 0.5)}
-                className="w-11 h-11 rounded-xl bg-zinc-800 items-center justify-center"
+                onPress={() => setGramsIn((v) => v + GRAMS_SMALL_STEP)}
+                className="w-12 h-11 rounded-xl bg-zinc-800 items-center justify-center"
               >
-                <Ionicons name="add" size={20} color="#fff" />
+                <Text className="text-white font-medium text-sm">+{GRAMS_SMALL_STEP}</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setGramsIn((v) => v + GRAMS_LARGE_STEP)}
+                className="w-12 h-11 rounded-xl bg-zinc-800 items-center justify-center"
+              >
+                <Text className="text-white font-medium text-sm">+{GRAMS_LARGE_STEP}</Text>
               </Pressable>
             </View>
           </View>
 
           <View className="mb-5">
             <Text className="text-zinc-400 text-sm mb-2">Grinder Setting</Text>
-            <TextInput
-              placeholder="e.g. 2.5, fine, 15 clicks"
-              placeholderTextColor="#666"
-              value={grinderSetting}
-              onChangeText={setGrinderSetting}
-              className="bg-zinc-800 rounded-xl px-4 py-3 text-white"
-            />
+            <View className="flex-row items-center gap-2">
+              <Pressable
+                onPress={() => setGrinderSetting((v) => Math.max(0, v - YIELD_STEP))}
+                className="w-12 h-11 rounded-xl bg-zinc-800 items-center justify-center"
+              >
+                <Text className="text-white font-medium text-sm">−{YIELD_STEP}</Text>
+              </Pressable>
+              <TextInput
+                value={grinderSetting.toString()}
+                onChangeText={(t) => setGrinderSetting(parseFloat(t) || 0)}
+                keyboardType="decimal-pad"
+                className="flex-1 bg-zinc-800 rounded-xl px-4 py-3 text-white text-center text-lg min-w-0"
+              />
+              <Pressable
+                onPress={() => setGrinderSetting((v) => v + YIELD_STEP)}
+                className="w-12 h-11 rounded-xl bg-zinc-800 items-center justify-center"
+              >
+                <Text className="text-white font-medium text-sm">+{YIELD_STEP}</Text>
+              </Pressable>
+            </View>
           </View>
 
           <View className="mb-5">

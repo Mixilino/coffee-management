@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
+import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 const QUICK_NOTES = ['Bitter', 'Sour', 'Weak', 'Harsh', 'Perfect', 'Balanced'];
 
